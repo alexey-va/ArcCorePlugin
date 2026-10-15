@@ -1,0 +1,96 @@
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
+
+plugins {
+    kotlin("jvm") version "2.3.0"
+    id("com.gradleup.shadow") version "9.3.0"
+    `maven-publish`
+}
+
+group = "ru.ruscrafting"
+version = providers.gradleProperty("pluginVersion").get()
+base.archivesName.set("ArcCore")
+
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(25)) } }
+kotlin { jvmToolchain(25) }
+
+repositories {
+    maven("https://repo.rus-crafting.ru/grocermc/")
+    maven("https://repo.papermc.io/repository/maven-public/")
+    mavenCentral()
+}
+
+dependencies {
+    implementation(kotlin("stdlib"))
+    implementation("ru.ruscrafting.arc:arc-core-paper-api:2.7.23")
+    implementation("ru.ruscrafting.arc:arc-core-paper:2.7.23")
+    implementation("ru.ruscrafting.arc:arc-core-redis:2.7.23")
+    implementation("ru.ruscrafting.arc:arc-core-sql:2.7.23")
+
+    // PaperArcMetricsProvider is hosted here; ARC keeps its own registry and exporter.
+    implementation("io.micrometer:micrometer-core:1.14.5")
+    implementation("io.micrometer:micrometer-commons:1.14.5")
+    implementation("io.micrometer:micrometer-observation:1.14.5")
+
+    compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
+
+    testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.23")
+    testImplementation(platform("org.junit:junit-bom:6.0.3"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("io.kotest:kotest-runner-junit5:6.0.7")
+    testImplementation("io.kotest:kotest-assertions-core:6.0.7")
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+    maxHeapSize = "2g"
+    jvmArgs("-Djdk.attach.allowAttachSelf=true", "-XX:+EnableDynamicAgentLoading")
+}
+
+tasks.processResources {
+    inputs.property("version", project.version)
+    filesMatching("plugin.yml") { expand("version" to project.version) }
+}
+
+tasks.jar { archiveClassifier.set("plain") }
+
+tasks.withType<AbstractArchiveTask>().configureEach {
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
+}
+
+tasks.shadowJar {
+    archiveClassifier.set("")
+    mergeServiceFiles()
+    // Only resource-service contracts move here; visual/gameplay APIs stay in ARC.
+    exclude {
+        it.path.startsWith("ru/arc/paper/api/") && !it.isDirectory &&
+            listOf("ArcSql", "ArcRedis", "ArcMetric").none { prefix -> it.name.startsWith(prefix) }
+    }
+    exclude("META-INF/DEPENDENCIES", "META-INF/LICENSE", "META-INF/NOTICE")
+}
+
+tasks.build { dependsOn(tasks.shadowJar) }
+
+publishing {
+    repositories {
+        maven {
+            name = "staging"
+            url = uri(layout.buildDirectory.dir("release-repository"))
+        }
+    }
+    publications {
+        create<MavenPublication>("runtimePlugin") {
+            groupId = "ru.ruscrafting"
+            artifactId = "ArcCore"
+            version = project.version.toString()
+            artifact(tasks.shadowJar)
+            pom {
+                name.set("ArcCore")
+                description.set("Shared SQL, Redis and metrics provider host for RusCrafting Paper plugins")
+                url.set("https://github.com/alexey-va/ArcCorePlugin")
+            }
+        }
+    }
+}
