@@ -1,1 +1,25 @@
 rootProject.name = "ArcCore"
+
+providers.gradleProperty("arcCoreDir").orNull?.let(::file)?.let { arcCoreDir ->
+    require(arcCoreDir.resolve("settings.gradle.kts").isFile) {
+        "arcCoreDir must point to an arc-core checkout"
+    }
+    includeBuild(arcCoreDir) {
+        dependencySubstitution {
+            listOf(
+                "arc-core",
+                "arc-core-logging",
+                "arc-core-metrics",
+                "arc-core-paper",
+                "arc-core-paper-api",
+                "arc-core-paper-schematics",
+                "arc-core-paper-testing",
+                "arc-core-redis",
+                "arc-core-sql",
+                "arc-core-testing",
+            ).forEach { artifact ->
+                substitute(module("ru.ruscrafting.arc:$artifact")).using(project(":$artifact"))
+            }
+        }
+    }
+}

@@ -19,31 +19,37 @@ def verify() -> None:
               (line.partition(":") for line in descriptor.splitlines())}
     for key, value in {"name": "ArcCore", "version": version, "main": "ru.arc.coreplugin.ArcCorePlugin"}.items():
         assert fields.get(key) == value, f"Unexpected descriptor entry: {key}"
-    assert not any(line.startswith(("depend:", "softdepend:")) for line in descriptor.splitlines()), \
+    assert "depend" not in fields and "loadbefore" not in fields, \
         "ArcCore must start independently of feature plugins"
+    assert fields.get("softdepend") == "[WorldEdit]", \
+        "ArcCore may optionally order after WorldEdit only"
     required = (
         "ru/arc/coreplugin/ArcCorePlugin.class",
         "ru/arc/coreplugin/ArcCoreServices.class",
         "ru/arc/paper/api/ArcSqlService.class",
         "ru/arc/paper/api/ArcRedisService.class",
         "ru/arc/paper/api/ArcMetricsService.class",
+        "ru/arc/paper/api/ArcSchematicService.class",
+        "ru/arc/paper/api/ArcSchematicCacheSettings.class",
         "ru/arc/paper/sql/PaperSqlServiceProvider.class",
         "ru/arc/paper/sql/SharedPaperSqlService.class",
         "ru/arc/paper/redis/PaperRedisServiceProvider.class",
         "ru/arc/paper/redis/SharedPaperRedisService.class",
         "ru/arc/paper/metrics/PaperArcMetricsProvider.class",
+        "ru/arc/paper/schematics/PaperSchematicServiceProvider.class",
         "io/micrometer/core/instrument/MeterRegistry.class",
         "kotlin/collections/CollectionsKt.class",
     )
     for name in required:
         assert name in entries, f"Missing host class: {name}"
+    assert "schematics.yml" in entries, "Missing schematic resource limits"
     for name in entries:
         if not name.endswith(".class"):
             continue
-        assert not name.startswith(("org/bukkit/", "io/papermc/", "ru/arc/dungeons/", "ru/arc/mounts/")), \
-            f"Server or domain class embedded: {name}"
+        assert not name.startswith(("org/bukkit/", "io/papermc/", "com/sk89q/", "ru/arc/dungeons/", "ru/arc/mounts/")), \
+            f"Server, WorldEdit or domain class embedded: {name}"
         if name.startswith("ru/arc/paper/api/"):
-            assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric")), \
+            assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic")), \
                 f"Non-resource API embedded: {name}"
     publication = Path(f"build/release-repository/ru/ruscrafting/ArcCore/{version}")
     assert jar.read_bytes() == (publication / jar.name).read_bytes(), "Staged JAR differs from tested JAR"

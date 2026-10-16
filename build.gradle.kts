@@ -17,15 +17,22 @@ kotlin { jvmToolchain(25) }
 repositories {
     maven("https://repo.rus-crafting.ru/grocermc/")
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://maven.enginehub.org/repo/") {
+        content {
+            includeGroupByRegex("com\\.sk89q(\\..*)?")
+            includeGroupByRegex("org\\.enginehub(\\..*)?")
+        }
+    }
     mavenCentral()
 }
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("ru.ruscrafting.arc:arc-core-paper-api:2.7.23")
-    implementation("ru.ruscrafting.arc:arc-core-paper:2.7.23")
-    implementation("ru.ruscrafting.arc:arc-core-redis:2.7.23")
-    implementation("ru.ruscrafting.arc:arc-core-sql:2.7.23")
+    implementation("ru.ruscrafting.arc:arc-core-paper-api:2.7.26")
+    implementation("ru.ruscrafting.arc:arc-core-paper:2.7.26")
+    implementation("ru.ruscrafting.arc:arc-core-paper-schematics:2.7.26")
+    implementation("ru.ruscrafting.arc:arc-core-redis:2.7.26")
+    implementation("ru.ruscrafting.arc:arc-core-sql:2.7.26")
 
     // PaperArcMetricsProvider is hosted here; ARC keeps its own registry and exporter.
     implementation("io.micrometer:micrometer-core:1.14.5")
@@ -34,12 +41,14 @@ dependencies {
 
     compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
 
-    testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.23")
+    testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.26")
     testImplementation(platform("org.junit:junit-bom:6.0.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("io.kotest:kotest-runner-junit5:6.0.7")
     testImplementation("io.kotest:kotest-assertions-core:6.0.7")
+    testImplementation("io.mockk:mockk:1.14.7")
+    testRuntimeOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.18")
 }
 
 tasks.withType<Test>().configureEach {
@@ -66,7 +75,7 @@ tasks.shadowJar {
     // Only resource-service contracts move here; visual/gameplay APIs stay in ARC.
     exclude {
         it.path.startsWith("ru/arc/paper/api/") && !it.isDirectory &&
-            listOf("ArcSql", "ArcRedis", "ArcMetric").none { prefix -> it.name.startsWith(prefix) }
+            listOf("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic").none { prefix -> it.name.startsWith(prefix) }
     }
     exclude("META-INF/DEPENDENCIES", "META-INF/LICENSE", "META-INF/NOTICE")
 }
@@ -88,7 +97,7 @@ publishing {
             artifact(tasks.shadowJar)
             pom {
                 name.set("ArcCore")
-                description.set("Shared SQL, Redis and metrics provider host for RusCrafting Paper plugins")
+                description.set("Shared SQL, Redis, metrics and schematic provider host for RusCrafting Paper plugins")
                 url.set("https://github.com/alexey-va/ArcCorePlugin")
             }
         }

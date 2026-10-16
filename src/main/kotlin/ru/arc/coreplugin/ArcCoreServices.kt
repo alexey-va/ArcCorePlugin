@@ -3,20 +3,24 @@ package ru.arc.coreplugin
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.ServicePriority
 import ru.arc.paper.api.ArcMetricsService
+import ru.arc.paper.api.ArcSchematicCacheSettings
 import ru.arc.paper.metrics.PaperArcMetricsProvider
 import ru.arc.paper.redis.PaperRedisServiceProvider
+import ru.arc.paper.schematics.PaperSchematicServiceProvider
 import ru.arc.paper.sql.PaperSqlServiceProvider
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The single lifecycle owner for ArcCore's shared Paper service providers.
- * Consumers must depend on ArcCore and resolve this holder through ServicesManager.
+ * Consumers depend on ArcCore and resolve shared API contracts through ServicesManager.
+ * This holder also exposes the SQL, Redis and metrics configuration bridge used by ARC.
  */
 class ArcCoreServices private constructor(
     private val owner: Plugin,
     val sql: PaperSqlServiceProvider,
     val redis: PaperRedisServiceProvider,
     val metrics: PaperArcMetricsProvider,
+    private val schematics: PaperSchematicServiceProvider?,
 ) : AutoCloseable {
     private val closed = AtomicBoolean()
 
@@ -25,10 +29,11 @@ class ArcCoreServices private constructor(
 
         val manager = owner.server.servicesManager
         val failure = closeInReverse(
-            listOf(
+            listOfNotNull(
                 sql,
                 redis,
                 metrics,
+                schematics,
                 AutoCloseable { manager.unregister(ArcMetricsService::class.java, metrics) },
                 AutoCloseable { manager.unregister(ArcCoreServices::class.java, this) },
             ),
@@ -39,7 +44,10 @@ class ArcCoreServices private constructor(
     companion object {
         /** Creates and publishes the complete host; any partial startup is cleaned up before failure escapes. */
         @JvmStatic
-        fun install(owner: Plugin): ArcCoreServices {
+        fun install(owner: Plugin): ArcCoreServices = install(owner, ArcSchematicCacheSettings.defaults())
+
+        @JvmStatic
+        fun install(owner: Plugin, schematicSettings: ArcSchematicCacheSettings): ArcCoreServices {
             val manager = owner.server.servicesManager
             val providers = mutableListOf<AutoCloseable>()
             var metrics: PaperArcMetricsProvider? = null
@@ -53,7 +61,13 @@ class ArcCoreServices private constructor(
                 val redis = PaperRedisServiceProvider(owner).also(providers::add)
                 val createdMetrics = PaperArcMetricsProvider(null).also(providers::add)
                 metrics = createdMetrics
-                val createdHolder = ArcCoreServices(owner, sql, redis, createdMetrics)
+                val schematics = if (owner.server.pluginManager.isPluginEnabled("WorldEdit")) {
+                    PaperSchematicServiceProvider(owner, schematicSettings).also(providers::add)
+                } else {
+                    owner.logger.info("Shared schematics unavailable: WorldEdit is not enabled")
+                    null
+                }
+                val createdHolder = ArcCoreServices(owner, sql, redis, createdMetrics, schematics)
                 holder = createdHolder
 
                 manager.register(ArcCoreServices::class.java, createdHolder, owner, ServicePriority.Normal)

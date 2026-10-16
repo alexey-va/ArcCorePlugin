@@ -25,7 +25,7 @@ jobs:
           distribution: temurin
           java-version: "25"
       - name: Verify arc-core provider-host architecture
-        uses: alexey-va/arc-core/.github/actions/verify-consumer@d44165f60dd6c0dc266397d00b193217f3be0869
+        uses: alexey-va/arc-core/.github/actions/verify-consumer@e7f9bd33f705dc7da6018589166491993d034a95
       - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
       - name: Test, package and stage the standalone host
         run: ./gradlew --no-daemon --build-cache test shadowJar publishRuntimePluginPublicationToStagingRepository

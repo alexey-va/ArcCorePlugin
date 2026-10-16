@@ -1,0 +1,17 @@
+# Global resource limits for the shared schematic provider.
+# Apply changes on the next server restart. Opening a library does not load files.
+# Each consumer supplies its explicit root; ArcCore never scans a catalogue at startup.
+cache:
+  ttl: 2m
+  maximum-entries: 64
+  maximum-bytes: 134217728
+limits:
+  maximum-file-bytes: 16777216
+  maximum-inflated-bytes: 67108864
+  maximum-volume: 2000000
+workers:
+  maximum-pending-requests: 64
+  threads: 2
+paper:
+  palette-per-tick: 128
+  blocks-per-tick: 512

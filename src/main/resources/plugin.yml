@@ -2,3 +2,4 @@ name: ArcCore
 version: '${version}'
 main: ru.arc.coreplugin.ArcCorePlugin
 api-version: '1.20'
+softdepend: [WorldEdit]
