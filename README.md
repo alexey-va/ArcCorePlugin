@@ -43,7 +43,7 @@ tests, builds the production JAR and checks its class ownership. A successful
 push to `main` publishes the exact tested artifact to the public Maven repository:
 
 ```text
-ru.ruscrafting:ArcCore:0.1.2
+ru.ruscrafting:ArcCore:0.1.3
 https://repo.rus-crafting.ru/grocermc/
 ```
 
@@ -78,8 +78,8 @@ or the immutable Maven coordinate. Verify its SHA-256 against the run artifact.
 From the existing `ruscrafting-ops` checkout:
 
 ```sh
-./scripts/mc jar --no-restart --dry-run classic classic_survival parkour -- /absolute/path/ArcCore-0.1.2.jar
-./scripts/mc jar --no-restart classic classic_survival parkour -- /absolute/path/ArcCore-0.1.2.jar
+./scripts/mc jar --no-restart --dry-run classic classic_survival parkour -- /absolute/path/ArcCore-0.1.3.jar
+./scripts/mc jar --no-restart classic classic_survival parkour -- /absolute/path/ArcCore-0.1.3.jar
 ```
 
 This updates only ArcCore. Activate through the normal notified/shared restart

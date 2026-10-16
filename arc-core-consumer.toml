@@ -1,5 +1,5 @@
 schema = 1
 platform = "paper"
 role = "provider-host"
-core_version = "2.7.26"
+core_version = "2.7.27"
 capabilities = []
