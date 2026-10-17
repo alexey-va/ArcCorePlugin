@@ -12,6 +12,8 @@ and attaches it to the shared metrics service.
 
 ## Shared visual packet budget
 
+ArcCore registers stable service identities before consumers enable. Configuration files are prepared on an owned worker; consumers observe `ArcCoreServices.ready()` before starting gameplay. Schematics requests wait for the prepared cache policy, and replaceable visual traffic reports `STARTING` until policy publication. No default policy bypasses preparation.
+
 ArcCore installs one `PaperVisualPacketRuntime` before consumers enable. It
 registers `ArcVisualPacketBudget` through Bukkit ServicesManager without requiring
 ARC, PacketEvents or global `Tasks` initialization. Packet transports remain in
@@ -27,7 +29,7 @@ is left untouched and is no longer consulted after migration. Existing host
 files are never merged or overwritten. Invalid existing/imported policy fails
 startup instead of silently changing operator limits.
 
-ARC's `/arc reload` calls `ArcCoreServices.reloadVisualPacketConfig()` on the
+ARC's `/arc reload` calls `ArcCoreServices.reloadVisualPacketConfigAsync()` on the
 server thread to re-read the host file. Invalid or missing policy keeps active
 limits; token balances, source counters and cleanup semantics are preserved.
 Consumers read `ArcCoreServices.visualPackets.metricPoints()` and never close
@@ -73,7 +75,7 @@ tests, builds the production JAR and checks its class ownership. A successful
 push to `main` publishes the exact tested artifact to the public Maven repository:
 
 ```text
-ru.ruscrafting:ArcCore:0.1.8
+ru.ruscrafting:ArcCore:0.1.10
 https://repo.rus-crafting.ru/grocermc/
 ```
 
@@ -109,8 +111,8 @@ or the immutable Maven coordinate. Verify its SHA-256 against the run artifact.
 From the existing `ruscrafting-ops` checkout:
 
 ```sh
-./scripts/mc jar --no-restart --dry-run classic classic_survival parkour -- /absolute/path/ArcCore-0.1.8.jar
-./scripts/mc jar --no-restart classic classic_survival parkour -- /absolute/path/ArcCore-0.1.8.jar
+./scripts/mc jar --no-restart --dry-run classic classic_survival parkour -- /absolute/path/ArcCore-0.1.10.jar
+./scripts/mc jar --no-restart classic classic_survival parkour -- /absolute/path/ArcCore-0.1.10.jar
 ```
 
 This updates only ArcCore. Activate through the normal notified/shared restart

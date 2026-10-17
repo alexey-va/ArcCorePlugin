@@ -20,9 +20,11 @@ internal class VisualPacketServiceConfig private constructor(private val config:
 
     fun install(owner: Plugin): PaperVisualPacketRuntime = PaperVisualPacketRuntime.install(owner, config)
 
-    fun reload(runtime: PaperVisualPacketRuntime) {
+    /** Worker-only reload of the existing file. Config.reload never seeds a missing policy. */
+    fun prepareReload(): PaperVisualPacketRuntime.Settings {
         config.reload()
-        runtime.reload(config)
+        require(KEYS.any(config::exists)) { "No visual packet settings loaded from ArcCore/visual-packets.yml" }
+        return PaperVisualPacketRuntime.Settings.from(config)
     }
 
     companion object {

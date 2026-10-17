@@ -15,13 +15,40 @@ import ru.arc.paper.api.ArcVisualPacketBudget
 import ru.arc.paper.api.VisualPacketAdmission
 import ru.arc.paper.testing.MockBukkitTestRuntime
 import java.nio.file.Files
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.ExecutionException
+import ru.arc.core.BoundedAsyncExecutor
 
 class ArcCoreServicesTest : StringSpec({
+    "delayed configuration keeps stable providers starting and close cancels readiness" {
+        MockBukkitTestRuntime.open().use { paper ->
+            val owner = paper.createSimplePlugin("DelayedArcCore")
+            val worker = BoundedAsyncExecutor("delayed-host-test", 1, 8)
+            val configuration = CompletableFuture<HostConfiguration>()
+            val host = ArcCoreServices.installPrepared(owner, worker, configuration)
+            try {
+                val registered = paper.server.servicesManager.load(ArcSqlService::class.java)
+                registered shouldNotBe null
+                host.ready().isDone shouldBe false
+                host.visualPackets.acquire("test:starting", Any(), 64, 1, false, true) shouldBe VisualPacketAdmission.STARTING
+                host.close()
+                host.ready().isCompletedExceptionally shouldBe true
+                configuration.complete(HostConfiguration.load(owner.dataFolder.toPath(), owner.logger))
+                paper.performTicks(3)
+                paper.server.servicesManager.load(ArcSqlService::class.java) shouldBe null
+                host.isReady() shouldBe false
+                host.drained().get(5, TimeUnit.SECONDS)
+            } finally { host.close(); worker.close() }
+        }
+    }
+
     "publishes the shared services and unregisters them when the host closes" {
         MockBukkitTestRuntime.open().use { paper ->
             val owner = paper.createSimplePlugin("ArcCore")
             val manager = paper.server.servicesManager
             val host = ArcCoreServices.install(owner)
+            awaitHost(paper, host.ready())
 
             manager.load(ArcCoreServices::class.java) shouldBe host
             manager.load(ArcSqlService::class.java) shouldNotBe null
@@ -54,6 +81,7 @@ class ArcCoreServicesTest : StringSpec({
             val owner = paper.createSimplePlugin("ArcCore")
             val manager = paper.server.servicesManager
             val host = ArcCoreServices.install(owner)
+            awaitHost(paper, host.ready())
             val schematics = checkNotNull(manager.load(ArcSchematicService::class.java))
 
             manager.load(ArcSchematicService::class.java) shouldNotBe null
@@ -102,6 +130,7 @@ class ArcCoreServicesTest : StringSpec({
             val consumer = paper.createSimplePlugin("ARC")
             val independentConsumer = paper.createSimplePlugin("ArcCivs")
             ArcCoreServices.install(owner).use { host ->
+                awaitHost(paper, host.ready())
                 val budget = independentConsumer.server.servicesManager.load(ArcVisualPacketBudget::class.java)
                 budget shouldBe host.visualPackets
                 paper.server.pluginManager.disablePlugin(consumer)
@@ -137,9 +166,10 @@ class ArcCoreServicesTest : StringSpec({
         MockBukkitTestRuntime.open().use { paper ->
             val owner = paper.createSimplePlugin("ArcCore")
             ArcCoreServices.install(owner).use { host ->
+                awaitHost(paper, host.ready())
                 val policy = owner.dataFolder.toPath().resolve("visual-packets.yml")
                 Files.writeString(policy, "server-mbps: 12.0\nviewer-mbps: 0.5\nverbose-logs: false\n")
-                host.reloadVisualPacketConfig()
+                awaitHost(paper, host.reloadVisualPacketConfigAsync())
                 val expected = host.visualPackets.snapshot().settings
                 expected.serverMbps shouldBe 12.0
                 expected.viewerMbps shouldBe 0.5
@@ -147,12 +177,12 @@ class ArcCoreServicesTest : StringSpec({
 
                 listOf("", "viewer-mbps: -2.0\n", "viewer-mbps: [\n").forEach { broken ->
                     Files.writeString(policy, broken)
-                    shouldThrow<IllegalArgumentException> { host.reloadVisualPacketConfig() }
+                    shouldThrow<ExecutionException> { awaitHost(paper, host.reloadVisualPacketConfigAsync()) }
                     host.visualPackets.snapshot().settings shouldBe expected
                     Files.readString(policy) shouldBe broken
                 }
                 Files.delete(policy)
-                shouldThrow<IllegalArgumentException> { host.reloadVisualPacketConfig() }
+                shouldThrow<ExecutionException> { awaitHost(paper, host.reloadVisualPacketConfigAsync()) }
                 host.visualPackets.snapshot().settings shouldBe expected
                 Files.exists(policy) shouldBe false
             }
@@ -174,3 +204,12 @@ class ArcCoreServicesTest : StringSpec({
         closed.shouldContainExactly("last", "failing", "first")
     }
 })
+
+private fun <T> awaitHost(paper: MockBukkitTestRuntime, future: CompletableFuture<T>): T {
+    val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+    while (!future.isDone && System.nanoTime() < deadline) {
+        paper.performTicks(1)
+        Thread.yield()
+    }
+    return future.get(1, TimeUnit.SECONDS)
+}
