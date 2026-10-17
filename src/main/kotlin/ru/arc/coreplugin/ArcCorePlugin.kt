@@ -1,54 +1,25 @@
 package ru.arc.coreplugin
 
 import org.bukkit.plugin.java.JavaPlugin
-import ru.arc.core.BoundedAsyncExecutor
-import java.util.concurrent.CompletableFuture
 import java.util.logging.Level
 
 open class ArcCorePlugin : JavaPlugin() {
     private var services: ArcCoreServices? = null
-    private var io: BoundedAsyncExecutor? = null
-    private var predecessor = CompletableFuture.completedFuture<Void>(null)
-    private var configuration: CompletableFuture<HostConfiguration>? = null
-
-    override fun onLoad() = prepareConfiguration()
-
-    private fun prepareConfiguration() {
-        val worker = BoundedAsyncExecutor("arc-core-config", 1, 16)
-        io = worker
-        val root = dataFolder.toPath()
-        val log = logger
-        configuration = predecessor.thenCompose { worker.submit { HostConfiguration.load(root, log) } }
-    }
 
     override fun onEnable() {
-        if (io == null) prepareConfiguration()
-        val candidate = checkNotNull(configuration) { "ArcCore configuration preparation did not start" }
-        services = ArcCoreServices.installPrepared(this, checkNotNull(io), candidate)
-        services!!.ready().whenComplete { _, failure ->
-            if (failure != null) {
-                logger.log(Level.SEVERE, "Failed to prepare ArcCore configuration", failure)
-                if (org.bukkit.Bukkit.isPrimaryThread() && isEnabled) server.pluginManager.disablePlugin(this)
-            }
-        }
+        services = ArcCoreServices.install(this)
     }
 
     override fun onDisable() {
-        val active = services
-        val worker = io
-        io = null
-        configuration = null
-        if (active == null) {
-            if (worker != null) predecessor = worker.closeAsync().thenApply { null }
-            return
-        }
+        val active = services ?: return
         services = null
-        try {
-            active.close()
-            predecessor = active.drained()
-        } catch (failure: Throwable) {
-            predecessor = active.drained()
-            logger.log(Level.SEVERE, "Failed to close ArcCore services", failure)
+        var failure: Throwable? = null
+        try { active.close() } catch (problem: Throwable) { failure = problem }
+        // All native admission is closed above. These provider futures wait only for
+        // accepted storage operations and retained consumer leases, never another tick.
+        try { active.drained().join() } catch (problem: Throwable) {
+            if (failure == null) failure = problem else failure.addSuppressed(problem)
         }
+        failure?.let { logger.log(Level.SEVERE, "Failed to close ArcCore services", it) }
     }
 }

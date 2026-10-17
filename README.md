@@ -29,8 +29,14 @@ is left untouched and is no longer consulted after migration. Existing host
 files are never merged or overwritten. Invalid existing/imported policy fails
 startup instead of silently changing operator limits.
 
+Startup reads host configuration and installs providers sequentially before `onEnable`
+returns. `ready()` remains available to consumers and is already complete after
+successful installation. Full shutdown closes native admission before waiting for
+accepted SQL/Redis work; it does not wait for another server tick.
+
 ARC's `/arc reload` calls `ArcCoreServices.reloadVisualPacketConfigAsync()` on the
-server thread to re-read the host file. Invalid or missing policy keeps active
+server thread to re-read and apply the host file synchronously. The existing future
+reports success or failure before the call returns. Invalid or missing policy keeps active
 limits; token balances, source counters and cleanup semantics are preserved.
 Consumers read `ArcCoreServices.visualPackets.metricPoints()` and never close
 that shared runtime. No consumer-local `Config` object crosses the host boundary.

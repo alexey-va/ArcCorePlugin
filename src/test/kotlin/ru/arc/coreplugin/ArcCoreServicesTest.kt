@@ -19,28 +19,17 @@ import java.nio.file.Files
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.ExecutionException
-import ru.arc.core.BoundedAsyncExecutor
 
 class ArcCoreServicesTest : StringSpec({
-    "delayed configuration keeps stable providers starting and close cancels readiness" {
+    "installation publishes ready policy before the next plugin can enable" {
         MockBukkitTestRuntime.open().use { paper ->
-            val owner = paper.createSimplePlugin("DelayedArcCore")
-            val worker = BoundedAsyncExecutor("delayed-host-test", 1, 8)
-            val configuration = CompletableFuture<HostConfiguration>()
-            val host = ArcCoreServices.installPrepared(owner, worker, configuration)
-            try {
-                val registered = paper.server.servicesManager.load(ArcSqlService::class.java)
-                registered shouldNotBe null
-                host.ready().isDone shouldBe false
-                host.visualPackets.acquire("test:starting", Any(), 64, 1, false, true) shouldBe VisualPacketAdmission.STARTING
-                host.close()
-                host.ready().isCompletedExceptionally shouldBe true
-                configuration.complete(HostConfiguration.load(owner.dataFolder.toPath(), owner.logger))
-                paper.performTicks(3)
-                paper.server.servicesManager.load(ArcSqlService::class.java) shouldBe null
-                host.isReady() shouldBe false
-                host.drained().get(5, TimeUnit.SECONDS)
-            } finally { host.close(); worker.close() }
+            val owner = paper.createSimplePlugin("SequentialArcCore")
+            ArcCoreServices.install(owner).use { host ->
+                host.ready().isDone shouldBe true
+                host.isReady() shouldBe true
+                paper.server.servicesManager.load(ArcSqlService::class.java) shouldNotBe null
+                host.visualPackets.acquire("test:starting", Any(), 64, 1, false, true) shouldBe VisualPacketAdmission.ALLOWED
+            }
         }
     }
 
