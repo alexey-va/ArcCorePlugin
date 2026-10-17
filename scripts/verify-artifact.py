@@ -1,8 +1,33 @@
 #!/usr/bin/env python3
 """Verify the standalone runtime JAR and its dependency-free publication."""
 from pathlib import Path
+from collections import Counter
 import xml.etree.ElementTree as ET
 import zipfile
+
+
+SHARED_VISUAL_CLASSES = (
+    "ru/arc/paper/api/ArcVisualPacketBudget.class",
+    "ru/arc/paper/api/VisualPacketAdmission.class",
+    "ru/arc/paper/packet/PaperVisualPacketRuntime.class",
+    "ru/arc/paper/packet/PaperVisualPacketRuntime$Settings.class",
+    "ru/arc/paper/packet/PaperVisualPacketRuntime$RuntimeSnapshot.class",
+    "ru/arc/paper/packet/PaperVisualPacketRuntime$CounterSnapshot.class",
+    "ru/arc/metrics/core/MetricPoint.class",
+)
+
+
+def verify_visual_ownership(names: list[str]) -> None:
+    counts = Counter(names)
+    for name in SHARED_VISUAL_CLASSES:
+        assert counts[name] == 1, f"Shared visual class must have exactly one host definition: {name}"
+    assert "visual-packets.yml" in counts, "Missing canonical visual packet policy"
+    for name in counts:
+        if name.endswith(".class") and name.startswith("ru/arc/metrics/"):
+            assert name.startswith("ru/arc/metrics/core/MetricPoint"), \
+                f"Host must embed only the shared MetricPoint DTO, not another metrics runtime: {name}"
+        assert not name.startswith(("io/micrometer/prometheus/", "io/micrometer/prometheusmetrics/")), \
+            f"Host must not embed another Prometheus registry/exporter: {name}"
 
 
 def verify() -> None:
@@ -13,8 +38,10 @@ def verify() -> None:
     )
     jar = Path(f"build/libs/ArcCore-{version}.jar")
     with zipfile.ZipFile(jar) as archive:
-        entries = set(archive.namelist())
+        names = archive.namelist()
+        entries = set(names)
         descriptor = archive.read("plugin.yml").decode()
+    verify_visual_ownership(names)
     fields = {key: value.strip().strip("'\"") for key, _, value in
               (line.partition(":") for line in descriptor.splitlines())}
     for key, value in {"name": "ArcCore", "version": version, "main": "ru.arc.coreplugin.ArcCorePlugin"}.items():
@@ -50,8 +77,8 @@ def verify() -> None:
         assert not name.startswith(("org/bukkit/", "io/papermc/", "com/sk89q/", "ru/arc/dungeons/", "ru/arc/mounts/")), \
             f"Server, WorldEdit or domain class embedded: {name}"
         if name.startswith("ru/arc/paper/api/"):
-            assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection")), \
-                f"Non-resource API embedded: {name}"
+            assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "VisualPacketAdmission")), \
+                f"Non-host API embedded: {name}"
     publication = Path(f"build/release-repository/ru/ruscrafting/ArcCore/{version}")
     assert jar.read_bytes() == (publication / jar.name).read_bytes(), "Staged JAR differs from tested JAR"
     pom = ET.parse(publication / f"ArcCore-{version}.pom").getroot()

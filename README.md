@@ -1,7 +1,7 @@
 # ArcCore
 
-Small Paper plugin that owns the shared SQL pools, Redis connections, metrics
-and schematic service used by RusCrafting plugins. Runtime name: **ArcCore**. Extracted from
+Small Paper plugin that owns the shared SQL pools, Redis connections, metrics,
+schematics and visual packet admission used by RusCrafting plugins. Runtime name: **ArcCore**. Extracted from
 [`ARC/arc-core-plugin`](https://github.com/alexey-va/ARC/tree/6cca762ace28950e107506661665c644c66dfb6c/arc-core-plugin)
 without changing the provider lifecycle.
 
@@ -9,6 +9,36 @@ The reusable implementations live in [`arc-core`](https://github.com/alexey-va/a
 This repository builds the deployable host independently of ARC. It does not
 start a second metrics HTTP exporter; ARC keeps the existing registry/exporter
 and attaches it to the shared metrics service.
+
+## Shared visual packet budget
+
+ArcCore installs one `PaperVisualPacketRuntime` before consumers enable. It
+registers `ArcVisualPacketBudget` through Bukkit ServicesManager without requiring
+ARC, PacketEvents or global `Tasks` initialization. Packet transports remain in
+their consumer plugins and use the same budget; no consumer creates a fallback.
+The reporter uses an ArcCore-owned scheduler and survives consumer shutdown.
+ArcCore closes and unregisters the provider only on host shutdown.
+
+`plugins/ArcCore/visual-packets.yml` is the canonical policy. If it is absent,
+first startup copies an existing `plugins/ARC/modules/visual-packets.yml` verbatim;
+otherwise it seeds the bundled defaults (32 Mbit/s server, 2 Mbit/s per viewer,
+250 ms burst, 30 second logging interval, verbose logs enabled). The legacy file
+is left untouched and is no longer consulted after migration. Existing host
+files are never merged or overwritten. Invalid existing/imported policy fails
+startup instead of silently changing operator limits.
+
+ARC's `/arc reload` calls `ArcCoreServices.reloadVisualPacketConfig()` on the
+server thread to re-read the host file. Invalid or missing policy keeps active
+limits; token balances, source counters and cleanup semantics are preserved.
+Consumers read `ArcCoreServices.visualPackets.metricPoints()` and never close
+that shared runtime. No consumer-local `Config` object crosses the host boundary.
+
+The host JAR owns `ArcVisualPacketBudget`, `VisualPacketAdmission`,
+`PaperVisualPacketRuntime` (including nested types), and the `MetricPoint` DTO.
+Consumers exclude these bytes and load them from ArcCore. Only `MetricPoint` is
+copied from `arc-core-metrics`; no second collector, Prometheus registry or
+exporter is embedded. Upgrade ARC and ArcCore in one coordinated restart because
+older ARC versions still attempt to install their own provider.
 
 ## Shared schematics
 
@@ -43,7 +73,7 @@ tests, builds the production JAR and checks its class ownership. A successful
 push to `main` publishes the exact tested artifact to the public Maven repository:
 
 ```text
-ru.ruscrafting:ArcCore:0.1.4
+ru.ruscrafting:ArcCore:0.1.8
 https://repo.rus-crafting.ru/grocermc/
 ```
 
@@ -57,6 +87,7 @@ The workflow runs:
 ```sh
 ./gradlew --no-daemon test shadowJar publishRuntimePluginPublicationToStagingRepository
 python3 scripts/verify-artifact.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
 ```
 
 For coordinated local library changes, opt into composite substitution:
@@ -78,8 +109,8 @@ or the immutable Maven coordinate. Verify its SHA-256 against the run artifact.
 From the existing `ruscrafting-ops` checkout:
 
 ```sh
-./scripts/mc jar --no-restart --dry-run classic classic_survival parkour -- /absolute/path/ArcCore-0.1.4.jar
-./scripts/mc jar --no-restart classic classic_survival parkour -- /absolute/path/ArcCore-0.1.4.jar
+./scripts/mc jar --no-restart --dry-run classic classic_survival parkour -- /absolute/path/ArcCore-0.1.8.jar
+./scripts/mc jar --no-restart classic classic_survival parkour -- /absolute/path/ArcCore-0.1.8.jar
 ```
 
 This updates only ArcCore. Activate through the normal notified/shared restart

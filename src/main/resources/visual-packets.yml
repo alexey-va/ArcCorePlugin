@@ -1,0 +1,14 @@
+# Shared application-payload budget for opt-in client-only displays, glow changes,
+# and short visual effects. Vanilla gameplay packets are not included.
+# First startup imports an existing ../ARC/modules/visual-packets.yml only when
+# this file is absent. This ArcCore file is the live policy after that migration.
+# Combined rate across all participating plugins, in decimal Mbit/s.
+server-mbps: 32.0
+# Rate per connection across all participating plugins, in decimal Mbit/s.
+viewer-mbps: 2.0
+# Token-bucket capacity equals rate multiplied by this duration (10-30000 ms).
+burst-ms: 250
+# Async reporting interval (30-3600 seconds).
+log-interval-seconds: 30
+# Preserve the existing operator-facing verbose reporting policy.
+verbose-logs: true

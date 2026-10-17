@@ -25,7 +25,7 @@ jobs:
           distribution: temurin
           java-version: "25"
       - name: Verify arc-core provider-host architecture
-        uses: alexey-va/arc-core/.github/actions/verify-consumer@5b785b5af561bc794e1702c0b5e05edf8b1c317d
+        uses: alexey-va/arc-core/.github/actions/verify-consumer@043750a4db2de6512c3585fd7769862b39596970
       - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
       - name: Test, package and stage the standalone host
         run: ./gradlew --no-daemon --build-cache test shadowJar publishRuntimePluginPublicationToStagingRepository
@@ -40,7 +40,9 @@ jobs:
             build/test-results/test/
           if-no-files-found: warn
       - name: Verify provider ownership and staged artifact
-        run: python3 scripts/verify-artifact.py
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_*.py'
+          python3 scripts/verify-artifact.py
       - name: Preserve tested production JAR and checksum
         run: |
           version=$(sed -n 's/^pluginVersion=//p' gradle.properties)

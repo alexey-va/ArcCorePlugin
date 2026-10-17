@@ -1,10 +1,12 @@
 package ru.arc.coreplugin
 
+import org.bukkit.Bukkit
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.ServicePriority
 import ru.arc.paper.api.ArcMetricsService
 import ru.arc.paper.api.ArcSchematicCacheSettings
 import ru.arc.paper.metrics.PaperArcMetricsProvider
+import ru.arc.paper.packet.PaperVisualPacketRuntime
 import ru.arc.paper.redis.PaperRedisServiceProvider
 import ru.arc.paper.schematics.PaperSchematicServiceProvider
 import ru.arc.paper.sql.PaperSqlServiceProvider
@@ -13,16 +15,29 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * The single lifecycle owner for ArcCore's shared Paper service providers.
  * Consumers depend on ArcCore and resolve shared API contracts through ServicesManager.
- * This holder also exposes the SQL, Redis and metrics configuration bridge used by ARC.
+ * This holder also exposes the configuration and metrics bridges used by ARC.
  */
 class ArcCoreServices private constructor(
     private val owner: Plugin,
     val sql: PaperSqlServiceProvider,
     val redis: PaperRedisServiceProvider,
     val metrics: PaperArcMetricsProvider,
+    val visualPackets: PaperVisualPacketRuntime,
+    private val visualPacketConfig: VisualPacketServiceConfig,
     private val schematics: PaperSchematicServiceProvider?,
 ) : AutoCloseable {
     private val closed = AtomicBoolean()
+
+    /**
+     * Reloads only the host's canonical visual policy on the server thread.
+     * Invalid or missing configuration throws without changing active limits.
+     * Consumers pass no Config instance across plugin classloaders and never close the provider.
+     */
+    fun reloadVisualPacketConfig() {
+        check(Bukkit.isPrimaryThread()) { "Visual packet policy must reload on the server thread" }
+        check(!closed.get()) { "ArcCore services are closed" }
+        visualPacketConfig.reload(visualPackets)
+    }
 
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
@@ -33,6 +48,7 @@ class ArcCoreServices private constructor(
                 sql,
                 redis,
                 metrics,
+                visualPackets,
                 schematics,
                 AutoCloseable { manager.unregister(ArcMetricsService::class.java, metrics) },
                 AutoCloseable { manager.unregister(ArcCoreServices::class.java, this) },
@@ -57,17 +73,19 @@ class ArcCoreServices private constructor(
                 check(manager.load(ArcMetricsService::class.java) == null) {
                     "An ArcMetricsService provider is already registered"
                 }
+                val visualPacketConfig = VisualPacketServiceConfig.load(owner.dataFolder.toPath(), owner.logger)
                 val sql = PaperSqlServiceProvider(owner).also(providers::add)
                 val redis = PaperRedisServiceProvider(owner).also(providers::add)
                 val createdMetrics = PaperArcMetricsProvider(null).also(providers::add)
                 metrics = createdMetrics
+                val visualPackets = visualPacketConfig.install(owner).also(providers::add)
                 val schematics = if (owner.server.pluginManager.isPluginEnabled("WorldEdit")) {
                     PaperSchematicServiceProvider(owner, schematicSettings).also(providers::add)
                 } else {
                     owner.logger.info("Shared schematics unavailable: WorldEdit is not enabled")
                     null
                 }
-                val createdHolder = ArcCoreServices(owner, sql, redis, createdMetrics, schematics)
+                val createdHolder = ArcCoreServices(owner, sql, redis, createdMetrics, visualPackets, visualPacketConfig, schematics)
                 holder = createdHolder
 
                 manager.register(ArcCoreServices::class.java, createdHolder, owner, ServicePriority.Normal)

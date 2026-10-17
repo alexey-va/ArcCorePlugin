@@ -26,13 +26,21 @@ repositories {
     mavenCentral()
 }
 
+// Only this immutable DTO crosses the host/ARC metrics boundary. Do not host
+// another collector, Prometheus registry or exporter by importing the whole module.
+val visualMetricsContract by configurations.creating {
+    isCanBeConsumed = false
+    isTransitive = false
+}
+
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("ru.ruscrafting.arc:arc-core-paper-api:2.7.31")
-    implementation("ru.ruscrafting.arc:arc-core-paper:2.7.31")
-    implementation("ru.ruscrafting.arc:arc-core-paper-schematics:2.7.31")
-    implementation("ru.ruscrafting.arc:arc-core-redis:2.7.31")
-    implementation("ru.ruscrafting.arc:arc-core-sql:2.7.31")
+    implementation("ru.ruscrafting.arc:arc-core-paper-api:2.7.32")
+    implementation("ru.ruscrafting.arc:arc-core-paper:2.7.32")
+    implementation("ru.ruscrafting.arc:arc-core-paper-schematics:2.7.32")
+    implementation("ru.ruscrafting.arc:arc-core-redis:2.7.32")
+    implementation("ru.ruscrafting.arc:arc-core-sql:2.7.32")
+    visualMetricsContract("ru.ruscrafting.arc:arc-core-metrics:2.7.32")
 
     // PaperArcMetricsProvider is hosted here; ARC keeps its own registry and exporter.
     implementation("io.micrometer:micrometer-core:1.14.5")
@@ -41,7 +49,8 @@ dependencies {
 
     compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
 
-    testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.31")
+    testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.32")
+    testImplementation("ru.ruscrafting.arc:arc-core-metrics:2.7.32") { isTransitive = false }
     testImplementation(platform("org.junit:junit-bom:6.0.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -72,11 +81,16 @@ tasks.withType<AbstractArchiveTask>().configureEach {
 tasks.shadowJar {
     archiveClassifier.set("")
     mergeServiceFiles()
-    // Only resource-service contracts move here; visual/gameplay APIs stay in ARC.
+    // Shared resource and visual admission contracts have exactly one host class identity.
     exclude {
         it.path.startsWith("ru/arc/paper/api/") && !it.isDirectory &&
-            listOf("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection").none { prefix -> it.name.startsWith(prefix) }
+            listOf("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "VisualPacketAdmission")
+                .none { prefix -> it.name.startsWith(prefix) }
     }
+    // arc-core-paper also contains ARC's optional Paper collector; the host owns
+    // the shared budget and DTO only, while ARC keeps its collector/exporter.
+    exclude("ru/arc/metrics/paper/**")
+    from({ visualMetricsContract.map { zipTree(it) } }) { include("ru/arc/metrics/core/MetricPoint*.class") }
     exclude("META-INF/DEPENDENCIES", "META-INF/LICENSE", "META-INF/NOTICE")
 }
 
@@ -97,7 +111,7 @@ publishing {
             artifact(tasks.shadowJar)
             pom {
                 name.set("ArcCore")
-                description.set("Shared SQL, Redis, metrics and schematic provider host for RusCrafting Paper plugins")
+                description.set("Shared SQL, Redis, metrics, schematic and visual packet provider host for RusCrafting Paper plugins")
                 url.set("https://github.com/alexey-va/ArcCorePlugin")
             }
         }
