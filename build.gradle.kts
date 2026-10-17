@@ -84,7 +84,7 @@ tasks.shadowJar {
     // Shared resource and visual admission contracts have exactly one host class identity.
     exclude {
         it.path.startsWith("ru/arc/paper/api/") && !it.isDirectory &&
-            listOf("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "ArcNativeCleanup", "VisualPacketAdmission")
+            listOf("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "ArcNativeCleanup", "ArcAfkProvider", "VisualPacketAdmission")
                 .none { prefix -> it.name.startsWith(prefix) }
     }
     // arc-core-paper also contains ARC's optional Paper collector; the host owns

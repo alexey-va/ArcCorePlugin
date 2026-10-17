@@ -7,6 +7,7 @@ import zipfile
 
 
 SHARED_VISUAL_CLASSES = (
+    "ru/arc/paper/api/ArcAfkProvider.class",
     "ru/arc/paper/api/ArcVisualPacketBudget.class",
     "ru/arc/paper/api/VisualPacketAdmission.class",
     "ru/arc/paper/packet/PaperVisualPacketRuntime.class",
@@ -79,7 +80,7 @@ def verify(*, publication: bool = True) -> None:
         assert not name.startswith(("org/bukkit/", "io/papermc/", "com/sk89q/", "ru/arc/dungeons/", "ru/arc/mounts/")), \
             f"Server, WorldEdit or domain class embedded: {name}"
         if name.startswith("ru/arc/paper/api/"):
-            assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "ArcNativeCleanup", "VisualPacketAdmission")), \
+            assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "ArcNativeCleanup", "ArcAfkProvider", "VisualPacketAdmission")), \
                 f"Non-host API embedded: {name}"
     if not publication:
         print(f"Verified standalone host JAR: {jar}")
