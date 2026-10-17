@@ -75,7 +75,7 @@ tests, builds the production JAR and checks its class ownership. A successful
 push to `main` publishes the exact tested artifact to the public Maven repository:
 
 ```text
-ru.ruscrafting:ArcCore:0.1.10
+ru.ruscrafting:ArcCore:0.1.11
 https://repo.rus-crafting.ru/grocermc/
 ```
 
@@ -92,12 +92,13 @@ python3 scripts/verify-artifact.py
 python3 -m unittest discover -s scripts -p 'test_*.py'
 ```
 
+Local verification does not stage or publish Maven artifacts; CI owns those steps.
 For coordinated local library changes, opt into composite substitution:
 
 ```sh
-./gradlew -ParcCoreDir=/absolute/path/to/arc-core test shadowJar publishRuntimePluginPublicationToStagingRepository
+./gradlew -ParcCoreDir=/absolute/path/to/arc-core test shadowJar
 python3 ../arc-core/scripts/verify_consumer_architecture.py .
-python3 scripts/verify-artifact.py
+python3 scripts/verify-artifact.py --jar-only
 ```
 
 Consumers use the pinned coordinate as `compileOnly`, and as `testImplementation`
@@ -111,8 +112,8 @@ or the immutable Maven coordinate. Verify its SHA-256 against the run artifact.
 From the existing `ruscrafting-ops` checkout:
 
 ```sh
-./scripts/mc jar --no-restart --dry-run classic classic_survival parkour -- /absolute/path/ArcCore-0.1.10.jar
-./scripts/mc jar --no-restart classic classic_survival parkour -- /absolute/path/ArcCore-0.1.10.jar
+./scripts/mc jar --no-restart --dry-run classic classic_survival parkour -- /absolute/path/ArcCore-0.1.11.jar
+./scripts/mc jar --no-restart classic classic_survival parkour -- /absolute/path/ArcCore-0.1.11.jar
 ```
 
 This updates only ArcCore. Activate through the normal notified/shared restart

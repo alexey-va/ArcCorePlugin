@@ -30,7 +30,7 @@ def verify_visual_ownership(names: list[str]) -> None:
             f"Host must not embed another Prometheus registry/exporter: {name}"
 
 
-def verify() -> None:
+def verify(*, publication: bool = True) -> None:
     version = next(
         line.partition("=")[2].strip()
         for line in Path("gradle.properties").read_text().splitlines()
@@ -79,6 +79,9 @@ def verify() -> None:
         if name.startswith("ru/arc/paper/api/"):
             assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "VisualPacketAdmission")), \
                 f"Non-host API embedded: {name}"
+    if not publication:
+        print(f"Verified standalone host JAR: {jar}")
+        return
     publication = Path(f"build/release-repository/ru/ruscrafting/ArcCore/{version}")
     assert jar.read_bytes() == (publication / jar.name).read_bytes(), "Staged JAR differs from tested JAR"
     pom = ET.parse(publication / f"ArcCore-{version}.pom").getroot()
@@ -90,4 +93,7 @@ def verify() -> None:
 
 
 if __name__ == "__main__":
-    verify()
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--jar-only", action="store_true", help="Verify local JAR without CI-owned Maven staging")
+    verify(publication=not parser.parse_args().jar_only)
