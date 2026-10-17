@@ -8,6 +8,7 @@ import io.kotest.matchers.shouldNotBe
 import io.mockk.mockk
 import org.bukkit.plugin.ServicePriority
 import ru.arc.paper.api.ArcMetricsService
+import ru.arc.paper.api.ArcNativeCleanupService
 import ru.arc.paper.api.ArcRedisService
 import ru.arc.paper.api.ArcSqlService
 import ru.arc.paper.api.ArcSchematicService
@@ -55,6 +56,7 @@ class ArcCoreServicesTest : StringSpec({
             manager.load(ArcRedisService::class.java) shouldNotBe null
             manager.load(ArcMetricsService::class.java) shouldBe host.metrics
             manager.load(ArcVisualPacketBudget::class.java) shouldBe host.visualPackets
+            manager.load(ArcNativeCleanupService::class.java) shouldBe host.nativeCleanup
             manager.load(ArcSchematicService::class.java) shouldBe null
             paper.server.pluginManager.getPlugin("ARC") shouldBe null
             host.visualPackets.acquire("arccivs:preview", Any(), 64, 1, false, true) shouldBe VisualPacketAdmission.ALLOWED
@@ -69,6 +71,7 @@ class ArcCoreServicesTest : StringSpec({
             manager.load(ArcRedisService::class.java) shouldBe null
             manager.load(ArcMetricsService::class.java) shouldBe null
             manager.load(ArcVisualPacketBudget::class.java) shouldBe null
+            manager.load(ArcNativeCleanupService::class.java) shouldBe null
             manager.load(ArcSchematicService::class.java) shouldBe null
             host.visualPackets.snapshot().closed shouldBe true
             paper.server.scheduler.pendingTasks.count { it.owner === owner } shouldBe 0
@@ -159,6 +162,29 @@ class ArcCoreServicesTest : StringSpec({
             manager.load(ArcRedisService::class.java) shouldBe null
             manager.load(ArcMetricsService::class.java) shouldBe null
             paper.server.scheduler.pendingTasks.count { it.owner === owner } shouldBe 0
+        }
+    }
+
+    "native cleanup survives consumer disable and host stop reports unfinished work" {
+        MockBukkitTestRuntime.open().use { paper ->
+            val owner = paper.createSimplePlugin("ArcCore")
+            val consumer = paper.createSimplePlugin("CleanupConsumer")
+            val host = ArcCoreServices.install(owner)
+            try {
+                val service = checkNotNull(paper.server.servicesManager.load(ArcNativeCleanupService::class.java))
+                var calls = 0
+                val cleanup = service.submit("consumer:entities") { calls++; calls == 300 }.toCompletableFuture()
+                paper.server.pluginManager.disablePlugin(consumer)
+                paper.performTicks(1)
+                (calls in 1..128) shouldBe true
+                cleanup.isDone shouldBe false
+                host.close()
+                cleanup.isCompletedExceptionally shouldBe true
+                paper.server.servicesManager.load(ArcNativeCleanupService::class.java) shouldBe null
+                val before = calls
+                paper.performTicks(3)
+                calls shouldBe before
+            } finally { host.close() }
         }
     }
 

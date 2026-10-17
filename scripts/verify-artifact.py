@@ -57,6 +57,7 @@ def verify(*, publication: bool = True) -> None:
         "ru/arc/paper/api/ArcRedisService.class",
         "ru/arc/paper/api/ArcMetricsService.class",
         "ru/arc/paper/api/ArcSchematicService.class",
+        "ru/arc/paper/api/ArcNativeCleanupService.class",
         "ru/arc/paper/api/ArcBlockProtectionService.class",
         "ru/arc/paper/api/ArcSchematicCacheSettings.class",
         "ru/arc/paper/sql/PaperSqlServiceProvider.class",
@@ -65,6 +66,7 @@ def verify(*, publication: bool = True) -> None:
         "ru/arc/paper/redis/SharedPaperRedisService.class",
         "ru/arc/paper/metrics/PaperArcMetricsProvider.class",
         "ru/arc/paper/schematics/PaperSchematicServiceProvider.class",
+        "ru/arc/paper/runtime/PaperNativeCleanupServiceProvider.class",
         "io/micrometer/core/instrument/MeterRegistry.class",
         "kotlin/collections/CollectionsKt.class",
     )
@@ -77,7 +79,7 @@ def verify(*, publication: bool = True) -> None:
         assert not name.startswith(("org/bukkit/", "io/papermc/", "com/sk89q/", "ru/arc/dungeons/", "ru/arc/mounts/")), \
             f"Server, WorldEdit or domain class embedded: {name}"
         if name.startswith("ru/arc/paper/api/"):
-            assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "VisualPacketAdmission")), \
+            assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "ArcNativeCleanup", "VisualPacketAdmission")), \
                 f"Non-host API embedded: {name}"
     if not publication:
         print(f"Verified standalone host JAR: {jar}")

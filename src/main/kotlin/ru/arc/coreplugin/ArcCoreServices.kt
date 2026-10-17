@@ -11,6 +11,7 @@ import ru.arc.paper.api.ArcSchematicCacheSettings
 import ru.arc.paper.metrics.PaperArcMetricsProvider
 import ru.arc.paper.packet.PaperVisualPacketRuntime
 import ru.arc.paper.redis.PaperRedisServiceProvider
+import ru.arc.paper.runtime.PaperNativeCleanupServiceProvider
 import ru.arc.paper.schematics.PaperSchematicServiceProvider
 import ru.arc.paper.sql.PaperSqlServiceProvider
 import java.util.concurrent.CompletableFuture
@@ -31,6 +32,7 @@ class ArcCoreServices private constructor(
     val redis: PaperRedisServiceProvider,
     val metrics: PaperArcMetricsProvider,
     val visualPackets: PaperVisualPacketRuntime,
+    val nativeCleanup: PaperNativeCleanupServiceProvider,
     private val io: BoundedAsyncExecutor,
     private val scheduler: BukkitTaskScheduler,
     private val tasks: LifecycleTaskScope,
@@ -101,6 +103,7 @@ class ArcCoreServices private constructor(
                 redis,
                 metrics,
                 visualPackets,
+                nativeCleanup,
                 schematics,
                 AutoCloseable { manager.unregister(ArcMetricsService::class.java, metrics) },
                 AutoCloseable { manager.unregister(ArcCoreServices::class.java, this) },
@@ -143,6 +146,7 @@ class ArcCoreServices private constructor(
                 val createdMetrics = PaperArcMetricsProvider(null).also(providers::add)
                 metrics = createdMetrics
                 val visualPackets = PaperVisualPacketRuntime.installPending(owner).also(providers::add)
+                val nativeCleanup = PaperNativeCleanupServiceProvider(owner).also(providers::add)
                 val schematics = if (owner.server.pluginManager.isPluginEnabled("WorldEdit")) {
                     PaperSchematicServiceProvider(owner, configuration.thenApply { it.schematics }).also(providers::add)
                 } else {
@@ -153,7 +157,7 @@ class ArcCoreServices private constructor(
                 providers += scheduler
                 val tasks = LifecycleTaskScope(scheduler)
                 providers += tasks
-                val createdHolder = ArcCoreServices(owner, sql, redis, createdMetrics, visualPackets, io, scheduler, tasks, schematics)
+                val createdHolder = ArcCoreServices(owner, sql, redis, createdMetrics, visualPackets, nativeCleanup, io, scheduler, tasks, schematics)
                 holder = createdHolder
 
                 manager.register(ArcCoreServices::class.java, createdHolder, owner, ServicePriority.Normal)
