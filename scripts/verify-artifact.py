@@ -30,6 +30,7 @@ def verify() -> None:
         "ru/arc/paper/api/ArcRedisService.class",
         "ru/arc/paper/api/ArcMetricsService.class",
         "ru/arc/paper/api/ArcSchematicService.class",
+        "ru/arc/paper/api/ArcBlockProtectionService.class",
         "ru/arc/paper/api/ArcSchematicCacheSettings.class",
         "ru/arc/paper/sql/PaperSqlServiceProvider.class",
         "ru/arc/paper/sql/SharedPaperSqlService.class",
@@ -49,7 +50,7 @@ def verify() -> None:
         assert not name.startswith(("org/bukkit/", "io/papermc/", "com/sk89q/", "ru/arc/dungeons/", "ru/arc/mounts/")), \
             f"Server, WorldEdit or domain class embedded: {name}"
         if name.startswith("ru/arc/paper/api/"):
-            assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic")), \
+            assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection")), \
                 f"Non-resource API embedded: {name}"
     publication = Path(f"build/release-repository/ru/ruscrafting/ArcCore/{version}")
     assert jar.read_bytes() == (publication / jar.name).read_bytes(), "Staged JAR differs from tested JAR"
