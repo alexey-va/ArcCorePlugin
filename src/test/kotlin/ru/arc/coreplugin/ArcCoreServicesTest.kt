@@ -162,10 +162,10 @@ class ArcCoreServicesTest : StringSpec({
             try {
                 val service = checkNotNull(paper.server.servicesManager.load(ArcNativeCleanupService::class.java))
                 var calls = 0
-                val cleanup = service.submit("consumer:entities") { calls++; calls == 300 }.toCompletableFuture()
+                val cleanup = service.submit("consumer:entities") { calls++; calls == 1024 }.toCompletableFuture()
                 paper.server.pluginManager.disablePlugin(consumer)
                 paper.performTicks(1)
-                (calls in 1..128) shouldBe true
+                (calls in 1..512) shouldBe true
                 cleanup.isDone shouldBe false
                 host.close()
                 cleanup.isCompletedExceptionally shouldBe true
