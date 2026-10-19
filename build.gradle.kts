@@ -35,12 +35,12 @@ val visualMetricsContract by configurations.creating {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("ru.ruscrafting.arc:arc-core-paper-api:2.7.41")
-    implementation("ru.ruscrafting.arc:arc-core-paper:2.7.41")
-    implementation("ru.ruscrafting.arc:arc-core-paper-schematics:2.7.41")
-    implementation("ru.ruscrafting.arc:arc-core-redis:2.7.41")
-    implementation("ru.ruscrafting.arc:arc-core-sql:2.7.41")
-    visualMetricsContract("ru.ruscrafting.arc:arc-core-metrics:2.7.41")
+    implementation("ru.ruscrafting.arc:arc-core-paper-api:2.7.44")
+    implementation("ru.ruscrafting.arc:arc-core-paper:2.7.44")
+    implementation("ru.ruscrafting.arc:arc-core-paper-schematics:2.7.44")
+    implementation("ru.ruscrafting.arc:arc-core-redis:2.7.44")
+    implementation("ru.ruscrafting.arc:arc-core-sql:2.7.44")
+    visualMetricsContract("ru.ruscrafting.arc:arc-core-metrics:2.7.44")
 
     // PaperArcMetricsProvider is hosted here; ARC keeps its own registry and exporter.
     implementation("io.micrometer:micrometer-core:1.14.5")
@@ -49,8 +49,8 @@ dependencies {
 
     compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
 
-    testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.41")
-    testImplementation("ru.ruscrafting.arc:arc-core-metrics:2.7.41") { isTransitive = false }
+    testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.44")
+    testImplementation("ru.ruscrafting.arc:arc-core-metrics:2.7.44") { isTransitive = false }
     testImplementation(platform("org.junit:junit-bom:6.0.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
