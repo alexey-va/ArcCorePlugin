@@ -28,7 +28,7 @@ internal class VisualPacketServiceConfig private constructor(private val config:
     }
 
     companion object {
-        private val KEYS = listOf("server-mbps", "viewer-mbps", "burst-ms", "log-interval-seconds", "verbose-logs")
+        private val KEYS = listOf("server-mbps", "viewer-mbps", "source-viewer-mbps", "burst-ms", "log-interval-seconds", "verbose-logs")
 
         fun load(dataPath: Path, logger: Logger): VisualPacketServiceConfig {
             val file = dataPath.resolve(PaperVisualPacketRuntime.CONFIG_FILE)

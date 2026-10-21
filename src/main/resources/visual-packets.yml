@@ -4,8 +4,11 @@
 # this file is absent. This ArcCore file is the live policy after that migration.
 # Combined rate across all participating plugins, in decimal Mbit/s.
 server-mbps: 32.0
-# Rate per connection across all participating plugins, in decimal Mbit/s.
+# Shared rate per connection for sources without an explicit exception, in Mbit/s.
 viewer-mbps: 2.0
+# Optional exact source exceptions, each with a separate per-connection bucket.
+# All sources still share server-mbps and wait for a writable network channel.
+source-viewer-mbps: {}
 # Token-bucket capacity equals rate multiplied by this duration (10-30000 ms).
 burst-ms: 250
 # Async reporting interval (30-3600 seconds).

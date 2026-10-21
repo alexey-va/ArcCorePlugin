@@ -55,6 +55,26 @@ class VisualPacketServiceConfigTest : StringSpec({
         }
     }
 
+    "source-only host exceptions preserve the ordinary default and reload from the canonical file" {
+        withPolicyRoot { root ->
+            val host = root.resolve("ArcCore")
+            Files.createDirectories(host)
+            val target = host.resolve("visual-packets.yml")
+            val original = "source-viewer-mbps:\n  'game:video.wall': 24.0\n"
+            Files.writeString(target, original)
+            val policy = VisualPacketServiceConfig.load(host, Logger.getAnonymousLogger())
+            policy.initialSettings.viewerMbps shouldBe 2.0
+            policy.initialSettings.serverMbps shouldBe 32.0
+            policy.initialSettings.sourceViewerMbps shouldBe mapOf("game:video.wall" to 24.0)
+            Files.readString(target) shouldBe original
+            Files.writeString(target, "source-viewer-mbps: {game:video: nope}\n")
+            shouldThrow<IllegalArgumentException> { policy.prepareReload() }
+            Files.writeString(target, "source-viewer-mbps: {}\n")
+            policy.prepareReload().sourceViewerMbps shouldBe emptyMap()
+            Files.readString(target) shouldBe "source-viewer-mbps: {}\n"
+        }
+    }
+
     "invalid existing or imported policy fails startup without silently using defaults" {
         withPolicyRoot { root ->
             val host = root.resolve("ArcCore")
