@@ -17,6 +17,22 @@ SHARED_VISUAL_CLASSES = (
     "ru/arc/metrics/core/MetricPoint.class",
 )
 
+SHARED_SCENE_CLASSES = tuple("ru/arc/paper/api/" + name + ".class" for name in (
+    "ArcSceneObservationService", "ArcSceneEntitySource", "ArcSceneLocationSource", "ArcSceneChunkListener",
+    "ArcSceneBounds", "ArcSceneEquipment", "ArcSceneEntity", "ArcSceneLocation",
+)) + ("ru/arc/paper/scene/PaperSceneObservationServiceProvider.class",)
+HOST_API_PREFIXES = ("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection",
+                     "ArcVisualPacketBudget", "ArcNativeCleanup", "ArcAfkProvider", "VisualPacketAdmission", "ArcScene")
+
+
+def verify_scene_ownership(names: list[str]) -> None:
+    counts = Counter(names)
+    for name in SHARED_SCENE_CLASSES:
+        assert counts[name] == 1, f"Shared scene class must have exactly one host definition: {name}"
+    for name in names:
+        if name.startswith("ru/arc/paper/api/") and name.endswith(".class"):
+            assert name.rsplit("/", 1)[-1].startswith(HOST_API_PREFIXES), f"Non-host API embedded: {name}"
+
 
 def verify_visual_ownership(names: list[str]) -> None:
     counts = Counter(names)
@@ -43,6 +59,7 @@ def verify(*, publication: bool = True) -> None:
         entries = set(names)
         descriptor = archive.read("plugin.yml").decode()
     verify_visual_ownership(names)
+    verify_scene_ownership(names)
     fields = {key: value.strip().strip("'\"") for key, _, value in
               (line.partition(":") for line in descriptor.splitlines())}
     for key, value in {"name": "ArcCore", "version": version, "main": "ru.arc.coreplugin.ArcCorePlugin"}.items():
@@ -79,9 +96,6 @@ def verify(*, publication: bool = True) -> None:
             continue
         assert not name.startswith(("org/bukkit/", "io/papermc/", "com/sk89q/", "ru/arc/dungeons/", "ru/arc/mounts/")), \
             f"Server, WorldEdit or domain class embedded: {name}"
-        if name.startswith("ru/arc/paper/api/"):
-            assert name.rsplit("/", 1)[-1].startswith(("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "ArcNativeCleanup", "ArcAfkProvider", "VisualPacketAdmission")), \
-                f"Non-host API embedded: {name}"
     if not publication:
         print(f"Verified standalone host JAR: {jar}")
         return
