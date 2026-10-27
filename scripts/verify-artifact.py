@@ -7,6 +7,7 @@ import zipfile
 
 
 SHARED_VISUAL_CLASSES = (
+    "ru/arc/paper/api/ArcNameplateClaim.class",
     "ru/arc/paper/api/ArcAfkProvider.class",
     "ru/arc/paper/api/ArcVisualPacketBudget.class",
     "ru/arc/paper/api/VisualPacketAdmission.class",
@@ -24,7 +25,7 @@ SHARED_SCENE_CLASSES = tuple("ru/arc/paper/api/" + name + ".class" for name in (
 )) + ("ru/arc/paper/scene/PaperSceneObservationServiceProvider.class",
       "ru/arc/paper/scene/PaperSceneEntityInfoServiceProvider.class")
 HOST_API_PREFIXES = ("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection",
-                     "ArcVisualPacketBudget", "ArcNativeCleanup", "ArcAfkProvider", "VisualPacketAdmission", "ArcScene")
+                     "ArcVisualPacketBudget", "ArcNativeCleanup", "ArcAfkProvider", "ArcNameplateClaim", "VisualPacketAdmission", "ArcScene")
 
 
 def verify_scene_ownership(names: list[str]) -> None:
