@@ -12,6 +12,7 @@ import ru.arc.paper.redis.PaperRedisServiceProvider
 import ru.arc.paper.runtime.PaperNativeCleanupServiceProvider
 import ru.arc.paper.schematics.PaperSchematicServiceProvider
 import ru.arc.paper.scene.PaperSceneObservationServiceProvider
+import ru.arc.paper.scene.PaperSceneEntityInfoServiceProvider
 import ru.arc.paper.sql.PaperSqlServiceProvider
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CancellationException
@@ -32,6 +33,7 @@ class ArcCoreServices private constructor(
     val visualPackets: PaperVisualPacketRuntime,
     val nativeCleanup: PaperNativeCleanupServiceProvider,
     private val sceneObservations: PaperSceneObservationServiceProvider,
+    private val sceneEntityInfo: PaperSceneEntityInfoServiceProvider,
     private val schematics: PaperSchematicServiceProvider?,
 ) : AutoCloseable {
     private val closed = AtomicBoolean()
@@ -79,6 +81,7 @@ class ArcCoreServices private constructor(
                 visualPackets,
                 nativeCleanup,
                 sceneObservations,
+                sceneEntityInfo,
                 schematics,
                 AutoCloseable { manager.unregister(ArcMetricsService::class.java, metrics) },
                 AutoCloseable { manager.unregister(ArcCoreServices::class.java, this) },
@@ -121,6 +124,7 @@ class ArcCoreServices private constructor(
                 val visualPackets = PaperVisualPacketRuntime.installPending(owner).also(providers::add)
                 val nativeCleanup = PaperNativeCleanupServiceProvider(owner).also(providers::add)
                 val sceneObservations = PaperSceneObservationServiceProvider(owner).also(providers::add)
+                val sceneEntityInfo = PaperSceneEntityInfoServiceProvider(owner).also(providers::add)
                 val schematics = if (owner.server.pluginManager.isPluginEnabled("WorldEdit")) {
                     PaperSchematicServiceProvider(owner, CompletableFuture.completedFuture(configuration.schematics)).also(providers::add)
                 } else {
@@ -128,7 +132,7 @@ class ArcCoreServices private constructor(
                     null
                 }
                 visualPackets.updateSettings(configuration.visual.initialSettings)
-                val createdHolder = ArcCoreServices(owner, sql, redis, createdMetrics, visualPackets, nativeCleanup, sceneObservations, schematics)
+                val createdHolder = ArcCoreServices(owner, sql, redis, createdMetrics, visualPackets, nativeCleanup, sceneObservations, sceneEntityInfo, schematics)
                 createdHolder.visualPolicy = configuration.visual
                 holder = createdHolder
 

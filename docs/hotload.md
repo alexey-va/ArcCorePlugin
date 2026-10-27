@@ -18,8 +18,9 @@ for a loader and not proof that loading a second ArcCore classloader is safe.
 Startup uses the same resource owners and removes partial service registrations
 if installation fails.
 
-ArcCore 0.1.22 hosts the additive `ArcSceneObservationService` contract from Core
-2.7.71. Public-scene source leases are synchronous and Main-only. Consumer
+ArcCore 0.1.23 hosts `ArcSceneObservationService` and the additive
+`ArcSceneEntityInfoService` contract from Core 2.7.72. Public-scene and information
+source leases are synchronous and Main-only. Consumer
 disable removes its sources; host close clears all callbacks and unregisters
 the service. Replacing the host/API still requires the coordinated server restart
 above, even though retained consumers use byte-identical pre-existing API classes.

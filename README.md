@@ -10,10 +10,15 @@ This repository builds the deployable host independently of ARC. It does not
 start a second metrics HTTP exporter; ARC keeps the existing registry/exporter
 and attaches it to the shared metrics service.
 
-ArcCore 0.1.22 also hosts `ArcSceneObservationService` and every `ArcScene*`
-contract from Core 2.7.71. Explicit public entity/location sources and chunk
-listeners use bounded Main-only callbacks and closeable leases. Consumers keep
-these API classes and `PaperSceneObservationServiceProvider` out of their JARs.
+ArcCore 0.1.23 hosts `ArcSceneObservationService`, the additive
+`ArcSceneEntityInfoService` and every `ArcScene*` contract from Core 2.7.72.
+Explicit public entity/location sources, chunk listeners and entity information
+use bounded Main-only callbacks and closeable leases. Entity information accepts
+at most eight sources, 64 requested IDs/results and sixteen plain text fields
+per entity. Sources validate live public actors against the requested bounds;
+no private inventories, cargo, ownership or membership cross this surface.
+Consumers keep these API classes, `PaperSceneObservationServiceProvider` and
+`PaperSceneEntityInfoServiceProvider` out of their JARs.
 
 ## Shared visual packet budget
 
