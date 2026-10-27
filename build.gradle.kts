@@ -35,12 +35,12 @@ val visualMetricsContract by configurations.creating {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("ru.ruscrafting.arc:arc-core-paper-api:2.7.69")
-    implementation("ru.ruscrafting.arc:arc-core-paper:2.7.69")
-    implementation("ru.ruscrafting.arc:arc-core-paper-schematics:2.7.69")
-    implementation("ru.ruscrafting.arc:arc-core-redis:2.7.69")
-    implementation("ru.ruscrafting.arc:arc-core-sql:2.7.69")
-    visualMetricsContract("ru.ruscrafting.arc:arc-core-metrics:2.7.69")
+    implementation("ru.ruscrafting.arc:arc-core-paper-api:2.7.71")
+    implementation("ru.ruscrafting.arc:arc-core-paper:2.7.71")
+    implementation("ru.ruscrafting.arc:arc-core-paper-schematics:2.7.71")
+    implementation("ru.ruscrafting.arc:arc-core-redis:2.7.71")
+    implementation("ru.ruscrafting.arc:arc-core-sql:2.7.71")
+    visualMetricsContract("ru.ruscrafting.arc:arc-core-metrics:2.7.71")
 
     // PaperArcMetricsProvider is hosted here; ARC keeps its own registry and exporter.
     implementation("io.micrometer:micrometer-core:1.14.5")
@@ -49,8 +49,8 @@ dependencies {
 
     compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
 
-    testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.69")
-    testImplementation("ru.ruscrafting.arc:arc-core-metrics:2.7.69") { isTransitive = false }
+    testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.71")
+    testImplementation("ru.ruscrafting.arc:arc-core-metrics:2.7.71") { isTransitive = false }
     testImplementation(platform("org.junit:junit-bom:6.0.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -81,10 +81,10 @@ tasks.withType<AbstractArchiveTask>().configureEach {
 tasks.shadowJar {
     archiveClassifier.set("")
     mergeServiceFiles()
-    // Shared resource and visual admission contracts have exactly one host class identity.
+    // Shared resource, public scene and visual admission contracts have one host class identity.
     exclude {
         it.path.startsWith("ru/arc/paper/api/") && !it.isDirectory &&
-            listOf("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "ArcNativeCleanup", "ArcAfkProvider", "VisualPacketAdmission")
+            listOf("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection", "ArcVisualPacketBudget", "ArcNativeCleanup", "ArcAfkProvider", "ArcScene", "VisualPacketAdmission")
                 .none { prefix -> it.name.startsWith(prefix) }
     }
     // arc-core-paper also contains ARC's optional Paper collector; the host owns

@@ -12,6 +12,7 @@ import ru.arc.paper.api.ArcNativeCleanupService
 import ru.arc.paper.api.ArcRedisService
 import ru.arc.paper.api.ArcSqlService
 import ru.arc.paper.api.ArcSchematicService
+import ru.arc.paper.api.ArcSceneObservationService
 import ru.arc.paper.api.ArcVisualPacketBudget
 import ru.arc.paper.api.VisualPacketAdmission
 import ru.arc.paper.testing.MockBukkitTestRuntime
@@ -46,6 +47,7 @@ class ArcCoreServicesTest : StringSpec({
             manager.load(ArcMetricsService::class.java) shouldBe host.metrics
             manager.load(ArcVisualPacketBudget::class.java) shouldBe host.visualPackets
             manager.load(ArcNativeCleanupService::class.java) shouldBe host.nativeCleanup
+            manager.load(ArcSceneObservationService::class.java) shouldNotBe null
             manager.load(ArcSchematicService::class.java) shouldBe null
             paper.server.pluginManager.getPlugin("ARC") shouldBe null
             host.visualPackets.acquire("arccivs:preview", Any(), 64, 1, false, true) shouldBe VisualPacketAdmission.ALLOWED
@@ -61,6 +63,7 @@ class ArcCoreServicesTest : StringSpec({
             manager.load(ArcMetricsService::class.java) shouldBe null
             manager.load(ArcVisualPacketBudget::class.java) shouldBe null
             manager.load(ArcNativeCleanupService::class.java) shouldBe null
+            manager.load(ArcSceneObservationService::class.java) shouldBe null
             manager.load(ArcSchematicService::class.java) shouldBe null
             host.visualPackets.snapshot().closed shouldBe true
             paper.server.scheduler.pendingTasks.count { it.owner === owner } shouldBe 0
@@ -112,6 +115,7 @@ class ArcCoreServicesTest : StringSpec({
             manager.load(ArcMetricsService::class.java) shouldBe null
             manager.load(ArcVisualPacketBudget::class.java) shouldBe null
             paper.server.scheduler.pendingTasks.count { it.owner === owner } shouldBe 0
+            manager.load(ArcSceneObservationService::class.java) shouldBe null
             manager.unregister(ArcSchematicService::class.java, existing)
         }
     }

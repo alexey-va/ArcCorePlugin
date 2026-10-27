@@ -10,6 +10,11 @@ This repository builds the deployable host independently of ARC. It does not
 start a second metrics HTTP exporter; ARC keeps the existing registry/exporter
 and attaches it to the shared metrics service.
 
+ArcCore 0.1.22 also hosts `ArcSceneObservationService` and every `ArcScene*`
+contract from Core 2.7.71. Explicit public entity/location sources and chunk
+listeners use bounded Main-only callbacks and closeable leases. Consumers keep
+these API classes and `PaperSceneObservationServiceProvider` out of their JARs.
+
 ## Shared visual packet budget
 
 ArcCore registers stable service identities before consumers enable. Configuration files are prepared on an owned worker; consumers observe `ArcCoreServices.ready()` before starting gameplay. Schematics requests wait for the prepared cache policy, and replaceable visual traffic reports `STARTING` until policy publication. No default policy bypasses preparation.
