@@ -22,6 +22,9 @@ SHARED_SCENE_CLASSES = tuple("ru/arc/paper/api/" + name + ".class" for name in (
     "ArcSceneObservationService", "ArcSceneEntitySource", "ArcSceneLocationSource", "ArcSceneChunkListener",
     "ArcSceneBounds", "ArcSceneEquipment", "ArcSceneEntity", "ArcSceneLocation",
     "ArcSceneEntityInfoService", "ArcSceneEntityInfoSource", "ArcSceneEntityInfo", "ArcSceneInfoField",
+    "ArcSceneDisplay", "ArcSceneDisplayPose", "ArcSceneVector3", "ArcSceneQuaternion", "ArcSceneItem",
+    "ArcSceneTextRun", "ArcSceneTextContent", "ArcSceneDisplayContent", "ArcSceneDisplayContent$Item",
+    "ArcSceneDisplayContent$Text", "ArcSceneDisplayTimeline", "ArcSceneDisplayKeyframe", "ArcSceneDisplayItemSwitch",
 )) + ("ru/arc/paper/scene/PaperSceneObservationServiceProvider.class",
       "ru/arc/paper/scene/PaperSceneEntityInfoServiceProvider.class")
 HOST_API_PREFIXES = ("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection",
