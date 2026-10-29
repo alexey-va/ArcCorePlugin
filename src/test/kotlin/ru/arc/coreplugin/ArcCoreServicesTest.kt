@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.mockk
 import org.bukkit.plugin.ServicePriority
+import ru.arc.paper.api.ArcDisplayPassengerService
 import ru.arc.paper.api.ArcMetricsService
 import ru.arc.paper.api.ArcNativeCleanupService
 import ru.arc.paper.api.ArcRedisService
@@ -47,6 +48,7 @@ class ArcCoreServicesTest : StringSpec({
             manager.load(ArcRedisService::class.java) shouldNotBe null
             manager.load(ArcMetricsService::class.java) shouldBe host.metrics
             manager.load(ArcVisualPacketBudget::class.java) shouldBe host.visualPackets
+            manager.load(ArcDisplayPassengerService::class.java) shouldBe host.displayPassengers
             manager.load(ArcNativeCleanupService::class.java) shouldBe host.nativeCleanup
             manager.load(ArcSceneObservationService::class.java) shouldNotBe null
             manager.load(ArcSceneEntityInfoService::class.java) shouldNotBe null
@@ -64,6 +66,7 @@ class ArcCoreServicesTest : StringSpec({
             manager.load(ArcRedisService::class.java) shouldBe null
             manager.load(ArcMetricsService::class.java) shouldBe null
             manager.load(ArcVisualPacketBudget::class.java) shouldBe null
+            manager.load(ArcDisplayPassengerService::class.java) shouldBe null
             manager.load(ArcNativeCleanupService::class.java) shouldBe null
             manager.load(ArcSceneObservationService::class.java) shouldBe null
             manager.load(ArcSceneEntityInfoService::class.java) shouldBe null
@@ -97,6 +100,7 @@ class ArcCoreServicesTest : StringSpec({
             manager.load(ArcRedisService::class.java) shouldBe null
             manager.load(ArcMetricsService::class.java) shouldBe null
             manager.load(ArcVisualPacketBudget::class.java) shouldBe null
+            manager.load(ArcDisplayPassengerService::class.java) shouldBe null
             schematics.diagnostics().closed shouldBe true
         }
     }
@@ -117,6 +121,7 @@ class ArcCoreServicesTest : StringSpec({
             manager.load(ArcRedisService::class.java) shouldBe null
             manager.load(ArcMetricsService::class.java) shouldBe null
             manager.load(ArcVisualPacketBudget::class.java) shouldBe null
+            manager.load(ArcDisplayPassengerService::class.java) shouldBe null
             paper.server.scheduler.pendingTasks.count { it.owner === owner } shouldBe 0
             manager.load(ArcSceneObservationService::class.java) shouldBe null
             manager.load(ArcSceneEntityInfoService::class.java) shouldBe null
@@ -140,6 +145,21 @@ class ArcCoreServicesTest : StringSpec({
                 host.visualPackets.snapshot().closed shouldBe false
                 budget!!.acquire("arccivs:preview", Any(), 1, 1, false, true) shouldBe VisualPacketAdmission.ALLOWED
             }
+        }
+    }
+
+    "rejects an existing passenger provider without unregistering its classloader owner" {
+        MockBukkitTestRuntime.open().use { paper ->
+            val previousOwner = paper.createSimplePlugin("PreviousPassengerHost")
+            val owner = paper.createSimplePlugin("NewPassengerHost")
+            val manager = paper.server.servicesManager
+            val existing = mockk<ArcDisplayPassengerService>()
+            manager.register(ArcDisplayPassengerService::class.java, existing, previousOwner, ServicePriority.Normal)
+            shouldThrow<IllegalStateException> { ArcCoreServices.install(owner) }
+            manager.load(ArcDisplayPassengerService::class.java) shouldBe existing
+            manager.load(ArcVisualPacketBudget::class.java) shouldBe null
+            manager.load(ArcSqlService::class.java) shouldBe null
+            manager.load(ArcCoreServices::class.java) shouldBe null
         }
     }
 

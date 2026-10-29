@@ -7,6 +7,7 @@ import ru.arc.core.BoundedAsyncExecutor
 import ru.arc.paper.api.ArcMetricsService
 import ru.arc.paper.api.ArcSchematicCacheSettings
 import ru.arc.paper.metrics.PaperArcMetricsProvider
+import ru.arc.paper.display.PaperDisplayPassengerServiceProvider
 import ru.arc.paper.packet.PaperVisualPacketRuntime
 import ru.arc.paper.redis.PaperRedisServiceProvider
 import ru.arc.paper.runtime.PaperNativeCleanupServiceProvider
@@ -31,6 +32,7 @@ class ArcCoreServices private constructor(
     val redis: PaperRedisServiceProvider,
     val metrics: PaperArcMetricsProvider,
     val visualPackets: PaperVisualPacketRuntime,
+    val displayPassengers: PaperDisplayPassengerServiceProvider,
     val nativeCleanup: PaperNativeCleanupServiceProvider,
     private val sceneObservations: PaperSceneObservationServiceProvider,
     private val sceneEntityInfo: PaperSceneEntityInfoServiceProvider,
@@ -79,6 +81,7 @@ class ArcCoreServices private constructor(
                 redis,
                 metrics,
                 visualPackets,
+                displayPassengers,
                 nativeCleanup,
                 sceneObservations,
                 sceneEntityInfo,
@@ -122,6 +125,7 @@ class ArcCoreServices private constructor(
                 val createdMetrics = PaperArcMetricsProvider(null).also(providers::add)
                 metrics = createdMetrics
                 val visualPackets = PaperVisualPacketRuntime.installPending(owner).also(providers::add)
+                val displayPassengers = PaperDisplayPassengerServiceProvider(owner).also(providers::add)
                 val nativeCleanup = PaperNativeCleanupServiceProvider(owner).also(providers::add)
                 val sceneObservations = PaperSceneObservationServiceProvider(owner).also(providers::add)
                 val sceneEntityInfo = PaperSceneEntityInfoServiceProvider(owner).also(providers::add)
@@ -132,7 +136,7 @@ class ArcCoreServices private constructor(
                     null
                 }
                 visualPackets.updateSettings(configuration.visual.initialSettings)
-                val createdHolder = ArcCoreServices(owner, sql, redis, createdMetrics, visualPackets, nativeCleanup, sceneObservations, sceneEntityInfo, schematics)
+                val createdHolder = ArcCoreServices(owner, sql, redis, createdMetrics, visualPackets, displayPassengers, nativeCleanup, sceneObservations, sceneEntityInfo, schematics)
                 createdHolder.visualPolicy = configuration.visual
                 holder = createdHolder
 
