@@ -40,6 +40,9 @@ class VisualOwnershipTest(unittest.TestCase):
 
 
 class SceneOwnershipTest(unittest.TestCase):
+    def test_all_shared_visual_and_scene_classes_are_allowed_in_host(self):
+        verifier.verify_scene_ownership(list(verifier.SHARED_SCENE_CLASSES) + list(verifier.SHARED_VISUAL_CLASSES))
+
     def test_shared_scene_contract_and_provider_have_one_host_identity(self):
         verifier.verify_scene_ownership(list(verifier.SHARED_SCENE_CLASSES))
 

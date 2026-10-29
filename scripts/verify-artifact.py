@@ -10,6 +10,9 @@ SHARED_VISUAL_CLASSES = (
     "ru/arc/paper/api/ArcNameplateClaim.class",
     "ru/arc/paper/api/ArcAfkProvider.class",
     "ru/arc/paper/api/ArcVisualPacketBudget.class",
+    "ru/arc/paper/api/ArcDisplayPassengerService.class",
+    "ru/arc/paper/api/ArcDisplayPassengerOwner.class",
+    "ru/arc/paper/display/PaperDisplayPassengerServiceProvider.class",
     "ru/arc/paper/api/VisualPacketAdmission.class",
     "ru/arc/paper/packet/PaperVisualPacketRuntime.class",
     "ru/arc/paper/packet/PaperVisualPacketRuntime$Settings.class",
@@ -28,7 +31,7 @@ SHARED_SCENE_CLASSES = tuple("ru/arc/paper/api/" + name + ".class" for name in (
 )) + ("ru/arc/paper/scene/PaperSceneObservationServiceProvider.class",
       "ru/arc/paper/scene/PaperSceneEntityInfoServiceProvider.class")
 HOST_API_PREFIXES = ("ArcSql", "ArcRedis", "ArcMetric", "ArcSchematic", "ArcBlockProtection",
-                     "ArcVisualPacketBudget", "ArcNativeCleanup", "ArcAfkProvider", "ArcNameplateClaim", "VisualPacketAdmission", "ArcScene")
+                     "ArcVisualPacketBudget", "ArcDisplayPassenger", "ArcNativeCleanup", "ArcAfkProvider", "ArcNameplateClaim", "VisualPacketAdmission", "ArcScene")
 
 
 def verify_scene_ownership(names: list[str]) -> None:
