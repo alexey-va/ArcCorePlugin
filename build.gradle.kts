@@ -17,6 +17,7 @@ kotlin { jvmToolchain(25) }
 repositories {
     maven("https://repo.rus-crafting.ru/grocermc/")
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.viaversion.com/") { content { includeGroup("com.viaversion") } }
     maven("https://maven.enginehub.org/repo/") {
         content {
             includeGroupByRegex("com\\.sk89q(\\..*)?")
@@ -48,6 +49,8 @@ dependencies {
     implementation("io.micrometer:micrometer-observation:1.14.5")
 
     compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
+    compileOnly("com.viaversion:viaversion-common:5.12.1")
+    compileOnly("com.viaversion:viabackwards-common:5.12.1")
 
     testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.81")
     testImplementation("ru.ruscrafting.arc:arc-core-metrics:2.7.81") { isTransitive = false }
@@ -57,6 +60,10 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:6.0.7")
     testImplementation("io.kotest:kotest-assertions-core:6.0.7")
     testImplementation("io.mockk:mockk:1.14.7")
+    testImplementation("com.viaversion:viaversion-common:5.12.1")
+    testImplementation("com.viaversion:viabackwards-common:5.12.1")
+    // Via's provided transport API is supplied by the server in production.
+    testRuntimeOnly("io.netty:netty-all:4.0.20.Final")
     testRuntimeOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.18")
 }
 

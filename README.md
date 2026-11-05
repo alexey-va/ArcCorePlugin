@@ -84,6 +84,23 @@ The runtime JAR owns every `ArcSchematic*` API class and the schematic provider
 implementation. Consumers compile against the shared API without shading either
 family. WorldEdit stays an optional external plugin and is never bundled.
 
+## Legacy native dialogs
+
+With ViaVersion and ViaBackwards enabled, ArcCore installs a small provider
+adapter for the verified ViaBackwards 5.12.1 chest dialog emulator. The upstream
+emulator retains each replaced dialog and can alternate forever between two
+screens when the player closes them. The adapter clears that synthetic previous
+dialog before delegating the native close, so Escape and server-side CLEAR
+dismiss the chest view. Core's real Back navigation continues to send its chosen
+screen; native clients and ordinary dialog transitions are unchanged.
+
+This integration uses the upstream provider API and public storage setter; it
+does not modify or bundle either Via plugin. It installs only over the default
+provider, logs and preserves a foreign provider, and restores the original on
+host shutdown only while still owning the registration. A different ViaBackwards
+version needs a fresh compatibility check. Missing Via plugins leave the host
+independent and the integration absent.
+
 ## Build and publish
 
 Use JDK 25. GitHub Actions verifies the provider-host contract, runs lifecycle
