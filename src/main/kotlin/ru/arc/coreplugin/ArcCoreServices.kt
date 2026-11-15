@@ -129,12 +129,8 @@ class ArcCoreServices private constructor(
                 val nativeCleanup = PaperNativeCleanupServiceProvider(owner).also(providers::add)
                 val sceneObservations = PaperSceneObservationServiceProvider(owner).also(providers::add)
                 val sceneEntityInfo = PaperSceneEntityInfoServiceProvider(owner).also(providers::add)
-                val schematics = if (owner.server.pluginManager.isPluginEnabled("WorldEdit")) {
-                    PaperSchematicServiceProvider(owner, CompletableFuture.completedFuture(configuration.schematics)).also(providers::add)
-                } else {
-                    owner.logger.info("Shared schematics unavailable: WorldEdit is not enabled")
-                    null
-                }
+                val schematics = PaperSchematicServiceProvider(owner,
+                    CompletableFuture.completedFuture(configuration.schematics)).also(providers::add)
                 visualPackets.updateSettings(configuration.visual.initialSettings)
                 val createdHolder = ArcCoreServices(owner, sql, redis, createdMetrics, visualPackets, displayPassengers, nativeCleanup, sceneObservations, sceneEntityInfo, schematics)
                 createdHolder.visualPolicy = configuration.visual

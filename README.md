@@ -60,11 +60,11 @@ older ARC versions still attempt to install their own provider.
 
 ## Shared schematics
 
-When WorldEdit is enabled, the host installs one
-`PaperSchematicServiceProvider` from `arc-core-paper-schematics`. Its
-`ArcSchematicService` contract is registered through Bukkit ServicesManager.
-Without WorldEdit the schematic service is absent; SQL, Redis and metrics remain
-available. Consumers resolve the service at use time and handle its absence.
+The host installs one `PaperSchematicServiceProvider` from
+`arc-core-paper-schematics` and registers its `ArcSchematicService` contract
+through Bukkit ServicesManager. Core reads schematics, transforms block states
+and places native blocks without a WorldEdit or FAWE plugin. Consumers resolve
+the service at use time and handle host shutdown or unavailable configuration.
 
 Each consumer opens a library with an explicit root. For example, ArcBuilder
 continues to use its configured `../ARC/schematics` catalogue. ArcCore does not
@@ -82,7 +82,7 @@ in flight. The host unregisters and closes the service when disabled.
 
 The runtime JAR owns every `ArcSchematic*` API class and the schematic provider
 implementation. Consumers compile against the shared API without shading either
-family. WorldEdit stays an optional external plugin and is never bundled.
+family. WorldEdit and FAWE are neither required nor bundled.
 
 ## Legacy native dialogs
 

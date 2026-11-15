@@ -52,7 +52,7 @@ class ArcCoreServicesTest : StringSpec({
             manager.load(ArcNativeCleanupService::class.java) shouldBe host.nativeCleanup
             manager.load(ArcSceneObservationService::class.java) shouldNotBe null
             manager.load(ArcSceneEntityInfoService::class.java) shouldNotBe null
-            manager.load(ArcSchematicService::class.java) shouldBe null
+            manager.load(ArcSchematicService::class.java) shouldNotBe null
             paper.server.pluginManager.getPlugin("ARC") shouldBe null
             host.visualPackets.acquire("arccivs:preview", Any(), 64, 1, false, true) shouldBe VisualPacketAdmission.ALLOWED
             host.visualPackets.recordSent("arccivs:preview", 64, 1, false)
@@ -76,9 +76,8 @@ class ArcCoreServicesTest : StringSpec({
         }
     }
 
-    "publishes the optional schematic service without preloading files and closes it" {
+    "publishes schematics without WorldEdit or preloading files and closes it" {
         MockBukkitTestRuntime.open().use { paper ->
-            paper.createSimplePlugin("WorldEdit")
             val owner = paper.createSimplePlugin("ArcCore")
             val manager = paper.server.servicesManager
             val host = ArcCoreServices.install(owner)
@@ -105,9 +104,8 @@ class ArcCoreServicesTest : StringSpec({
         }
     }
 
-    "rolls back earlier providers when the optional schematic service cannot register" {
+    "rolls back earlier providers when the schematic service cannot register" {
         MockBukkitTestRuntime.open().use { paper ->
-            paper.createSimplePlugin("WorldEdit")
             val owner = paper.createSimplePlugin("ArcCore")
             val manager = paper.server.servicesManager
             val existing = mockk<ArcSchematicService>()

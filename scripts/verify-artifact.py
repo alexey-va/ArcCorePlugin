@@ -75,7 +75,7 @@ def verify(*, publication: bool = True) -> None:
         assert fields.get(key) == value, f"Unexpected descriptor entry: {key}"
     assert "depend" not in fields and "loadbefore" not in fields, \
         "ArcCore must start independently of feature plugins"
-    assert fields.get("softdepend") == "[WorldEdit, ViaVersion, ViaBackwards]", \
+    assert fields.get("softdepend") == "[ViaVersion, ViaBackwards]", \
         "ArcCore must order after its optional external providers"
     required = (
         "ru/arc/coreplugin/ArcCorePlugin.class",
@@ -95,6 +95,7 @@ def verify(*, publication: bool = True) -> None:
         "ru/arc/paper/redis/SharedPaperRedisService.class",
         "ru/arc/paper/metrics/PaperArcMetricsProvider.class",
         "ru/arc/paper/schematics/PaperSchematicServiceProvider.class",
+        "ru/arc/paper/schematics/PaperSchematicCodec.class",
         "ru/arc/paper/runtime/PaperNativeCleanupServiceProvider.class",
         "io/micrometer/core/instrument/MeterRegistry.class",
         "kotlin/collections/CollectionsKt.class",
@@ -105,7 +106,7 @@ def verify(*, publication: bool = True) -> None:
     for name in entries:
         if not name.endswith(".class"):
             continue
-        assert not name.startswith(("org/bukkit/", "io/papermc/", "com/sk89q/", "com/viaversion/", "ru/arc/dungeons/", "ru/arc/mounts/")), \
+        assert not name.startswith(("org/bukkit/", "io/papermc/", "com/sk89q/", "org/enginehub/", "com/viaversion/", "ru/arc/dungeons/", "ru/arc/mounts/")), \
             f"Server, optional external provider or domain class embedded: {name}"
     if not publication:
         print(f"Verified standalone host JAR: {jar}")

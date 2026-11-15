@@ -18,12 +18,6 @@ repositories {
     maven("https://repo.rus-crafting.ru/grocermc/")
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.viaversion.com/") { content { includeGroup("com.viaversion") } }
-    maven("https://maven.enginehub.org/repo/") {
-        content {
-            includeGroupByRegex("com\\.sk89q(\\..*)?")
-            includeGroupByRegex("org\\.enginehub(\\..*)?")
-        }
-    }
     mavenCentral()
 }
 
@@ -36,12 +30,12 @@ val visualMetricsContract by configurations.creating {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("ru.ruscrafting.arc:arc-core-paper-api:2.7.81")
-    implementation("ru.ruscrafting.arc:arc-core-paper:2.7.81")
-    implementation("ru.ruscrafting.arc:arc-core-paper-schematics:2.7.81")
-    implementation("ru.ruscrafting.arc:arc-core-redis:2.7.81")
-    implementation("ru.ruscrafting.arc:arc-core-sql:2.7.81")
-    visualMetricsContract("ru.ruscrafting.arc:arc-core-metrics:2.7.81")
+    implementation("ru.ruscrafting.arc:arc-core-paper-api:2.7.83")
+    implementation("ru.ruscrafting.arc:arc-core-paper:2.7.83")
+    implementation("ru.ruscrafting.arc:arc-core-paper-schematics:2.7.83")
+    implementation("ru.ruscrafting.arc:arc-core-redis:2.7.83")
+    implementation("ru.ruscrafting.arc:arc-core-sql:2.7.83")
+    visualMetricsContract("ru.ruscrafting.arc:arc-core-metrics:2.7.83")
 
     // PaperArcMetricsProvider is hosted here; ARC keeps its own registry and exporter.
     implementation("io.micrometer:micrometer-core:1.14.5")
@@ -52,8 +46,8 @@ dependencies {
     compileOnly("com.viaversion:viaversion-common:5.12.1")
     compileOnly("com.viaversion:viabackwards-common:5.12.1")
 
-    testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.81")
-    testImplementation("ru.ruscrafting.arc:arc-core-metrics:2.7.81") { isTransitive = false }
+    testImplementation("ru.ruscrafting.arc:arc-core-paper-testing:2.7.83")
+    testImplementation("ru.ruscrafting.arc:arc-core-metrics:2.7.83") { isTransitive = false }
     testImplementation(platform("org.junit:junit-bom:6.0.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -64,7 +58,6 @@ dependencies {
     testImplementation("com.viaversion:viabackwards-common:5.12.1")
     // Via's provided transport API is supplied by the server in production.
     testRuntimeOnly("io.netty:netty-all:4.0.20.Final")
-    testRuntimeOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.18")
 }
 
 tasks.withType<Test>().configureEach {
